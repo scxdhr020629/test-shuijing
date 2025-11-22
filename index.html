@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>模块化塔防 - OOP版</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #222; color: white; font-family: sans-serif; user-select: none; }
+        canvas { display: block; }
+        #ui-layer { position: absolute; inset: 0; pointer-events: none; }
+        .panel { pointer-events: auto; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 8px; position: absolute; border: 1px solid #444; }
+        #stats-panel { top: 20px; left: 20px; }
+        #controls-panel { bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 5px; }
+        button { background: #333; color: white; border: 1px solid #555; padding: 8px 12px; cursor: pointer; border-radius: 4px; }
+        button:hover:not(:disabled) { background: #555; }
+        button.active { background: #d4af37; color: black; }
+        button:disabled { opacity: 0.4; cursor: not-allowed; }
+        #game-over { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: black; border: 2px solid red; padding: 40px; text-align: center; z-index: 99; pointer-events: auto; }
+        #tooltip { display: none; position: absolute; background: rgba(0,0,0,0.8); color: white; padding: 5px 10px; border-radius: 4px; pointer-events: none; font-size: 12px; border: 1px solid #aaa; z-index: 100; }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    
+    <div id="ui-layer">
+        <div id="tooltip"></div>
+        <div id="stats-panel" class="panel">
+            <div>金币: <span id="gold" style="color:gold">0</span></div>
+            <div>波数: <span id="wave">1</span></div>
+            <div>HP: <span id="hp" style="color:#0f0">0</span></div>
+            <div>护盾: <span id="shield" style="color:#0ff">0</span></div>
+            <div>等级: <span id="level">1</span> (EXP: <span id="exp">0</span>)</div>
+            <div style="margin-top:5px;"><button id="btn-speed" style="padding:4px 8px; font-size:12px;">速度: 1x</button></div>
+        </div>
+        <div id="controls-panel" class="panel">
+            <button id="btn-upgrade">购买经验 $500</button>
+            <div style="width:1px; bg:#555; margin:0 5px;"></div>
+            <div id="tower-buttons" style="display:flex; gap:5px;"></div>
+        </div>
+        <div id="game-over">
+            <h1 style="color:red">GAME OVER</h1>
+            <button onclick="location.reload()">重试</button>
+        </div>
+    </div>
+
+    <script type="module" src="./js/game.js"></script>
+</body>
+</html>
