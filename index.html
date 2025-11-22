@@ -5,18 +5,120 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>模块化塔防 - OOP版</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #222; color: white; font-family: sans-serif; user-select: none; }
+        body { margin: 0; overflow: hidden; background: #1a1a1a; color: #eee; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; user-select: none; }
         canvas { display: block; }
         #ui-layer { position: absolute; inset: 0; pointer-events: none; }
-        .panel { pointer-events: auto; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 8px; position: absolute; border: 1px solid #444; }
-        #stats-panel { top: 20px; left: 20px; }
-        #controls-panel { bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 5px; }
-        button { background: #333; color: white; border: 1px solid #555; padding: 8px 12px; cursor: pointer; border-radius: 4px; }
-        button:hover:not(:disabled) { background: #555; }
-        button.active { background: #d4af37; color: black; }
-        button:disabled { opacity: 0.4; cursor: not-allowed; }
-        #game-over { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: black; border: 2px solid red; padding: 40px; text-align: center; z-index: 99; pointer-events: auto; }
-        #tooltip { display: none; position: absolute; background: rgba(0,0,0,0.8); color: white; padding: 5px 10px; border-radius: 4px; pointer-events: none; font-size: 12px; border: 1px solid #aaa; z-index: 100; }
+        
+        .panel { 
+            pointer-events: auto; 
+            background: rgba(20, 20, 30, 0.85); 
+            backdrop-filter: blur(5px);
+            padding: 15px; 
+            border-radius: 12px; 
+            position: absolute; 
+            border: 1px solid rgba(255,255,255,0.1); 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            transition: all 0.3s ease;
+        }
+        
+        #stats-panel { top: 20px; left: 20px; min-width: 150px; }
+        #stats-panel div { margin-bottom: 5px; font-size: 14px; display: flex; justify-content: space-between; }
+        #stats-panel span { font-weight: bold; }
+        
+        #controls-panel { 
+            bottom: 20px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            display: flex; 
+            gap: 10px; 
+            align-items: center;
+            padding: 10px 20px;
+        }
+        
+        button { 
+            background: linear-gradient(to bottom, #444, #333); 
+            color: #ddd; 
+            border: 1px solid #555; 
+            padding: 10px 15px; 
+            cursor: pointer; 
+            border-radius: 6px; 
+            font-family: inherit;
+            font-size: 13px;
+            transition: all 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
+        
+        button:hover:not(:disabled) { 
+            background: linear-gradient(to bottom, #555, #444); 
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+            color: white;
+            border-color: #777;
+        }
+        
+        button:active:not(:disabled) {
+            transform: translateY(1px);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+
+        button.active { 
+            background: linear-gradient(to bottom, #f1c40f, #f39c12); 
+            color: #2c3e50; 
+            border-color: #e67e22;
+            font-weight: bold;
+            text-shadow: none;
+        }
+        
+        button:disabled { 
+            opacity: 0.5; 
+            cursor: not-allowed; 
+            filter: grayscale(0.8);
+        }
+        
+        #game-over { 
+            display: none; 
+            position: absolute; 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%); 
+            background: rgba(0,0,0,0.9); 
+            border: 2px solid #e74c3c; 
+            padding: 50px; 
+            text-align: center; 
+            z-index: 99; 
+            pointer-events: auto; 
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(231, 76, 60, 0.3);
+        }
+        
+        #tooltip { 
+            display: none; 
+            position: absolute; 
+            background: rgba(0,0,0,0.9); 
+            color: white; 
+            padding: 8px 12px; 
+            border-radius: 6px; 
+            pointer-events: none; 
+            font-size: 13px; 
+            border: 1px solid #666; 
+            z-index: 100; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            line-height: 1.4;
+        }
+
+        /* 塔按钮样式优化 */
+        #tower-buttons button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 80px;
+        }
+        #tower-buttons small {
+            margin-top: 3px;
+            font-size: 11px;
+            opacity: 0.8;
+        }
     </style>
 </head>
 <body>
@@ -34,7 +136,7 @@
         </div>
         <div id="controls-panel" class="panel">
             <button id="btn-upgrade">购买经验 $500</button>
-            <div style="width:1px; bg:#555; margin:0 5px;"></div>
+            <div style="width:1px; background:rgba(255,255,255,0.2); margin:0 10px;"></div>
             <div id="tower-buttons" style="display:flex; gap:5px;"></div>
         </div>
         <div id="game-over">

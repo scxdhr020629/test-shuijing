@@ -4,13 +4,13 @@ import { Tower, FlameTower, LaserTower, TeslaTower, HealerTower, MoneyTower, Bla
 
 // 塔的配置数据 (按文档调整)
 const TOWER_TYPES = {
-    1: { class: Tower, name:'基础塔', cost:50, range:250, damage:30, cooldown:1.0, color:'#4caf50', hp:100, unlockLevel: 1 },
-    2: { class: Tower, name:'射箭塔', cost:100, range:300, damage:50, cooldown:1.2, color:'#9c27b0', hp:80, projectileSpeed: 700, unlockLevel: 3 }, // 穿透逻辑需在Tower里实现或简化
-    3: { class: FlameTower, name:'灼烧塔', cost:150, range:200, damage:40, cooldown:0.8, color:'#ff5722', hp:120, projectileSpeed: 250, unlockLevel: 5 },
-    4: { class: HealerTower, name:'治疗塔', cost:200, range:350, damage:15, cooldown:1.0, color:'#00bcd4', hp:200, unlockLevel: 7 },
-    5: { class: LaserTower, name:'镭射塔', cost:300, range:400, damage:80, cooldown:0.5, color:'#d32f2f', hp:150, unlockLevel: 10 },
-    6: { class: MoneyTower, name:'金钱塔', cost:400, range:100, damage:10, cooldown:0.5, color:'#ffd700', hp:100, unlockLevel: 3 },
-    7: { class: BlackHoleTower, name:'黑洞塔', cost:500, range:150, damage:60, cooldown:1.5, color:'#000000', hp:200, unlockLevel: 15 }
+    1: { class: Tower, name:'基础塔', cost:50, range:250, damage:30, cooldown:1.5, color:'#4caf50', hp:100, unlockLevel: 1 },
+    2: { class: Tower, name:'射箭塔', cost:100, range:300, damage:50, cooldown:1.8, color:'#9c27b0', hp:80, projectileSpeed: 700, unlockLevel: 3 }, // 穿透逻辑需在Tower里实现或简化
+    3: { class: FlameTower, name:'灼烧塔', cost:150, range:200, damage:40, cooldown:1.2, color:'#ff5722', hp:120, projectileSpeed: 250, unlockLevel: 5 },
+    4: { class: HealerTower, name:'治疗塔', cost:200, range:350, damage:15, cooldown:1.5, color:'#00bcd4', hp:200, unlockLevel: 7 },
+    5: { class: LaserTower, name:'镭射塔', cost:300, range:400, damage:80, cooldown:0.8, color:'#d32f2f', hp:150, unlockLevel: 10 },
+    6: { class: MoneyTower, name:'金钱塔', cost:400, range:100, damage:10, cooldown:1.0, color:'#ffd700', hp:100, unlockLevel: 3 },
+    7: { class: BlackHoleTower, name:'黑洞塔', cost:500, range:150, damage:60, cooldown:3.0, color:'#000000', hp:200, unlockLevel: 15 }
 };
 
 class Game {
@@ -36,7 +36,8 @@ class Game {
                 radius:35, regen:10, 
                 shield: 500, maxShield: 500, shieldCooldown: 0,
                 upgradeCost:500 // 保留旧逻辑兼容，但主要靠EXP升级
-            }
+            },
+            lastTime: 0
         };
         
         this.entities = {
@@ -164,12 +165,23 @@ class Game {
     }
 
     // 主循环
-    loop() {
+    loop(timestamp) {
         if (!this.state.active) return;
-        requestAnimationFrame(() => this.loop());
+        requestAnimationFrame((t) => this.loop(t));
         
+        if (!this.state.lastTime) {
+            this.state.lastTime = timestamp;
+            return;
+        }
+
+        let dt = (timestamp - this.state.lastTime) / 1000;
+        this.state.lastTime = timestamp;
+
+        // 限制最大 dt 防止切换标签页后跳跃过大
+        if (dt > 0.1) dt = 0.1;
+
         this.state.frameCount++;
-        const dt = 0.016 * this.state.speed; // 应用速度
+        dt *= this.state.speed; // 应用速度
 
         this.update(dt);
         this.draw();
@@ -304,28 +316,35 @@ class Game {
         }
 
         // 普通怪物生成间隔
-        const spawnRate = Math.max(30, 120 - wave * 2);
+        // 加快生成速度，并且随波次增加每次生成的数量
+        const spawnRate = Math.max(20, 100 - wave * 3); 
         if (this.state.frameCount % spawnRate === 0) {
-            let EnemyClass = Enemy;
+            const count = 1 + Math.floor(wave / 5); // 每轮增加生成数量
             
-            // 怪物池逻辑
-            let pool = [Enemy];
-            if (wave > 2) pool.push(FlyingEnemy);
-            if (wave > 4) pool.push(ExploderEnemy);
-            if (wave > 7) pool.push(HealerEnemy);
-            if (wave > 10) pool.push(ArmoredEnemy);
-            if (wave > 15) pool.push(SplitterEnemy);
+            for (let i = 0; i < count; i++) {
+                let EnemyClass = Enemy;
+                
+                // 怪物池逻辑
+                let pool = [Enemy];
+                if (wave > 2) pool.push(FlyingEnemy);
+                if (wave > 4) pool.push(ExploderEnemy);
+                if (wave > 7) pool.push(HealerEnemy);
+                if (wave > 10) pool.push(ArmoredEnemy);
+                if (wave > 15) pool.push(SplitterEnemy);
 
-            // 简单权重选择
-            EnemyClass = pool[Math.floor(Math.random() * pool.length)];
+                // 简单权重选择
+                EnemyClass = pool[Math.floor(Math.random() * pool.length)];
 
-            const angle = Math.random() * Math.PI * 2;
-            const rad = Math.max(this.canvas.width, this.canvas.height) / 2 + 50;
-            const x = this.state.crystal.x + Math.cos(angle) * rad;
-            const y = this.state.crystal.y + Math.sin(angle) * rad;
+                const angle = Math.random() * Math.PI * 2;
+                const rad = Math.max(this.canvas.width, this.canvas.height) / 2 + 50;
+                // 稍微分散一点
+                const offset = i * 20; 
+                const x = this.state.crystal.x + Math.cos(angle) * (rad + offset);
+                const y = this.state.crystal.y + Math.sin(angle) * (rad + offset);
 
-            const enemy = new EnemyClass(x, y, wave);
-            this.entities.enemies.push(enemy);
+                const enemy = new EnemyClass(x, y, wave);
+                this.entities.enemies.push(enemy);
+            }
         }
     }
 
@@ -445,10 +464,17 @@ class Game {
         // 放置预览
         if (this.input.selectedTowerId) {
             const conf = TOWER_TYPES[this.input.selectedTowerId];
+            // 绘制范围圈
             this.ctx.beginPath();
             this.ctx.arc(this.input.mouseX, this.input.mouseY, conf.range, 0, Math.PI*2);
             this.ctx.strokeStyle = 'rgba(255,255,255,0.3)';
             this.ctx.stroke();
+
+            // 绘制塔身预览
+            this.ctx.fillStyle = conf.color;
+            this.ctx.beginPath();
+            this.ctx.arc(this.input.mouseX, this.input.mouseY, 15, 0, Math.PI*2);
+            this.ctx.fill();
         }
         
         this.ctx.restore();

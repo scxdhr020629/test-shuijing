@@ -9,7 +9,7 @@ export class Enemy {
         this.wave = wave;
         this.radius = 12;
         this.speed = 50;
-        this.hp = 30 + (wave * 5);
+        this.hp = (30 + (wave * 5)) * 2; // 血量翻倍
         this.maxHp = this.hp;
         this.damage = 10;
         this.color = 'red';
@@ -71,10 +71,30 @@ export class Enemy {
     }
 
     draw(ctx) {
+        // 阴影
+        ctx.shadowBlur = 5;
+        ctx.shadowColor = this.color;
+        
         ctx.fillStyle = this.color;
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         ctx.fill();
+        
+        ctx.shadowBlur = 0;
+
+        // 眼睛
+        ctx.fillStyle = 'white';
+        ctx.beginPath();
+        ctx.arc(this.x - 4, this.y - 3, 3, 0, Math.PI * 2);
+        ctx.arc(this.x + 4, this.y - 3, 3, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.fillStyle = 'black';
+        ctx.beginPath();
+        ctx.arc(this.x - 4, this.y - 3, 1, 0, Math.PI * 2);
+        ctx.arc(this.x + 4, this.y - 3, 1, 0, Math.PI * 2);
+        ctx.fill();
+
         if (this.burnTimer > 0) {
             ctx.strokeStyle = 'orange';
             ctx.lineWidth = 2;
@@ -87,7 +107,7 @@ export class Enemy {
 export class FlyingEnemy extends Enemy {
     constructor(x, y, wave) {
         super(x, y, wave);
-        this.speed = 80;
+        this.speed = 120; // 速度加快
         this.radius = 10;
         this.color = '#ffd700'; // 黄色
         this.hp *= 0.6;
@@ -97,9 +117,17 @@ export class FlyingEnemy extends Enemy {
     draw(ctx) {
         ctx.fillStyle = this.color;
         ctx.beginPath();
-        ctx.moveTo(this.x + 10, this.y);
-        ctx.lineTo(this.x - 5, this.y + 8);
-        ctx.lineTo(this.x - 5, this.y - 8);
+        // 飞机形状
+        ctx.moveTo(this.x + 12, this.y);
+        ctx.lineTo(this.x - 8, this.y + 10);
+        ctx.lineTo(this.x - 4, this.y);
+        ctx.lineTo(this.x - 8, this.y - 10);
+        ctx.fill();
+        
+        // 核心
+        ctx.fillStyle = 'white';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, 3, 0, Math.PI*2);
         ctx.fill();
     }
 }
@@ -108,7 +136,7 @@ export class FlyingEnemy extends Enemy {
 export class ExploderEnemy extends Enemy {
     constructor(x, y, wave) {
         super(x, y, wave);
-        this.speed = 35;
+        this.speed = 70; // 速度加快
         this.hp *= 1.5;
         this.color = '#222';
         this.radius = 15;
@@ -130,12 +158,15 @@ export class ExploderEnemy extends Enemy {
     draw(ctx) {
         ctx.fillStyle = this.color;
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        // 不规则/脉冲形状
+        const r = this.radius + Math.sin(Date.now() / 100) * 2;
+        ctx.arc(this.x, this.y, r, 0, Math.PI * 2);
         ctx.fill();
-        // 画个红点表示危险
-        ctx.fillStyle = 'red';
+        
+        // 危险红点
+        ctx.fillStyle = `rgba(255, 0, 0, ${Math.abs(Math.sin(Date.now() / 200))})`;
         ctx.beginPath();
-        ctx.arc(this.x, this.y, 5, 0, Math.PI * 2);
+        ctx.arc(this.x, this.y, 6, 0, Math.PI * 2);
         ctx.fill();
     }
 
@@ -184,7 +215,10 @@ export class HealerEnemy extends Enemy {
     
     draw(ctx) {
         ctx.fillStyle = this.color;
-        ctx.fillRect(this.x - 8, this.y - 8, 16, 16);
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2);
+        ctx.fill();
+        
         ctx.fillStyle = 'white';
         ctx.fillRect(this.x - 8, this.y - 3, 16, 6);
         ctx.fillRect(this.x - 3, this.y - 8, 6, 16);
@@ -212,9 +246,20 @@ export class ArmoredEnemy extends Enemy {
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         ctx.fill();
-        ctx.strokeStyle = 'silver';
-        ctx.lineWidth = 3;
+        
+        // 装甲边框
+        ctx.strokeStyle = '#bdc3c7';
+        ctx.lineWidth = 4;
         ctx.stroke();
+        
+        // 铆钉
+        ctx.fillStyle = '#7f8c8d';
+        for(let i=0; i<4; i++) {
+            const a = (Math.PI/2) * i;
+            ctx.beginPath();
+            ctx.arc(this.x + Math.cos(a)*this.radius, this.y + Math.sin(a)*this.radius, 3, 0, Math.PI*2);
+            ctx.fill();
+        }
     }
 }
 
@@ -242,6 +287,22 @@ export class SplitterEnemy extends Enemy {
             game.entities.enemies.push(small);
         }
     }
+
+    draw(ctx) {
+        ctx.fillStyle = this.color;
+        // 两个细胞融合的样子
+        ctx.beginPath();
+        ctx.arc(this.x - 4, this.y, this.radius * 0.8, 0, Math.PI * 2);
+        ctx.arc(this.x + 4, this.y, this.radius * 0.8, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // 核心
+        ctx.fillStyle = '#da70d6';
+        ctx.beginPath();
+        ctx.arc(this.x - 4, this.y, 4, 0, Math.PI * 2);
+        ctx.arc(this.x + 4, this.y, 4, 0, Math.PI * 2);
+        ctx.fill();
+    }
 }
 
 // --- Boss怪 ---
@@ -249,7 +310,7 @@ export class BossEnemy extends Enemy {
     constructor(x, y, wave) {
         super(x, y, wave);
         this.speed = 30;
-        this.hp = 500 + (wave * 100);
+        this.hp = (500 + (wave * 100)) * 2; // 血量翻倍
         this.maxHp = this.hp;
         this.radius = 30;
         this.color = '#8B0000'; // 深红
@@ -342,22 +403,54 @@ export class BossEnemy extends Enemy {
     }
 
     draw(ctx) {
+        // 光环
+        ctx.strokeStyle = `rgba(139, 0, 0, 0.5)`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius + 5, 0, Math.PI*2);
+        ctx.stroke();
+
         ctx.fillStyle = this.color;
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        // 带刺的圆
+        const spikes = 8;
+        for(let i=0; i<spikes * 2; i++) {
+            const r = (i % 2 === 0) ? this.radius : this.radius + 5;
+            const a = (Math.PI * i) / spikes;
+            ctx.lineTo(this.x + Math.cos(a) * r, this.y + Math.sin(a) * r);
+        }
+        ctx.closePath();
         ctx.fill();
         
+        // 恶魔眼
+        ctx.fillStyle = '#ffeb3b';
+        ctx.beginPath();
+        ctx.moveTo(this.x - 10, this.y - 5);
+        ctx.lineTo(this.x - 5, this.y + 5);
+        ctx.lineTo(this.x - 15, this.y + 5);
+        ctx.fill();
+        
+        ctx.beginPath();
+        ctx.moveTo(this.x + 10, this.y - 5);
+        ctx.lineTo(this.x + 15, this.y + 5);
+        ctx.lineTo(this.x + 5, this.y + 5);
+        ctx.fill();
+
         // 绘制血条
         const hpPct = this.hp / this.maxHp;
         ctx.fillStyle = 'black';
-        ctx.fillRect(this.x - 20, this.y - 40, 40, 6);
+        ctx.fillRect(this.x - 25, this.y - 50, 50, 8);
         ctx.fillStyle = 'red';
-        ctx.fillRect(this.x - 20, this.y - 40, 40 * hpPct, 6);
+        ctx.fillRect(this.x - 25, this.y - 50, 50 * hpPct, 8);
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(this.x - 25, this.y - 50, 50, 8);
 
         // 绘制状态指示
-        ctx.fillStyle = 'white';
-        ctx.font = '10px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText(this.state === 'charge' ? '!' : '?', this.x, this.y);
+        if (this.state === 'charge') {
+            ctx.fillStyle = 'red';
+            ctx.font = 'bold 20px Arial';
+            ctx.fillText('!', this.x, this.y - 60);
+        }
     }
 }
